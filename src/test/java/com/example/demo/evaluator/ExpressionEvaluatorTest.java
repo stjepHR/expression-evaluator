@@ -4,13 +4,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeAll;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @SpringBootTest
 public class ExpressionEvaluatorTest {
 
-	private ObjectNode prepareDataSample() {
+    private static ObjectNode dataSample;
+	
+    @BeforeAll
+    public static void setUp() {
+        dataSample = prepareDataSample();
+    }
+	
+	private static ObjectNode prepareDataSample() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ObjectNode mainObjectNode = objectMapper.createObjectNode();
 		ObjectNode customerNode = objectMapper.createObjectNode();
@@ -35,31 +44,31 @@ public class ExpressionEvaluatorTest {
 	@Test
 	void checkAssignmentFullExample() {
 		String expression = "(customer.firstName == \"MARK\" AND customer.salary < 100) OR (customer.address != null && customer.address.city == \"Washington\")";
-		assertTrue(ExpressionEvaluator.evaluate(prepareDataSample(), expression));
+		assertTrue(ExpressionEvaluator.evaluate(dataSample, expression));
 	}
 	
 	@Test
 	void checkParenthesesHandling() {
 		String expression = "(((customer.firstName == \"MARK\")) AND (((customer.salary < 100))))";
-		assertTrue(ExpressionEvaluator.evaluate(prepareDataSample(), expression));
+		assertTrue(ExpressionEvaluator.evaluate(dataSample, expression));
 	}
 	
 	@Test
 	void checkLogicalOr() {
 		String expression = "customer.firstName == \"MARK\" OR customer.salary == 100";
-		assertTrue(ExpressionEvaluator.evaluate(prepareDataSample(), expression));
+		assertTrue(ExpressionEvaluator.evaluate(dataSample, expression));
 	}
 	
 	@Test
 	void checkLogicalAnd() {
 		String expression = "customer.firstName == \"MARK\" AND customer.salary == 100";
-		assertFalse(ExpressionEvaluator.evaluate(prepareDataSample(), expression));
+		assertFalse(ExpressionEvaluator.evaluate(dataSample, expression));
 	}
 	
 	@Test
 	void checkNull() {
 		String expression = "customer.firstName == null";
-		ObjectNode objectNode = prepareDataSample();
+		ObjectNode objectNode = dataSample;
 		ObjectNode customerNode = (ObjectNode) objectNode.get("customer");
 
 		// Actual null value
@@ -75,7 +84,7 @@ public class ExpressionEvaluatorTest {
 	@Test
 	void checkNotExisting() {
 		String expression = "customer.firstName == \"MARK\"";
-		ObjectNode objectNode = prepareDataSample();
+		ObjectNode objectNode = dataSample;
 
 		objectNode.putNull("customer");
 		assertFalse(ExpressionEvaluator.evaluate(objectNode, expression));
